@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "barrier": "c",
+        "bitset": "c",
+        "memory_resource": "c"
+    }
+}

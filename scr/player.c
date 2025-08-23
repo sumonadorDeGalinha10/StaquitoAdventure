@@ -7,10 +7,10 @@ void InitPlayer(Player *player)
     player->position = (Vector2){400, 500};
     player->size = (Vector2){50, 50};
     player->color = BLUE;
-    player->speed = 10.0f;
+    player->speed = 8.0f;
     player->dashSpeed = 15.0f;
-    player->dashCooldown = 2.0f;
-    player->dashDuration = 1.0f;
+    player->dashCooldown = 0.0f;
+    player->dashDuration = 0.0f;
     player->isDashing = false;
     player->health = 100;
     player->score = 0;
@@ -22,15 +22,17 @@ void UpdatePlayer(Player *player) {
         player->dashCooldown -= GetFrameTime();
     }
     
+    float currentSpeed=player->speed;
+
     if (player->isDashing) {
         player->dashDuration -= GetFrameTime();
         if (player->dashDuration <= 0) {
             player->isDashing = false;
         }
-        return;
+      currentSpeed = player->dashSpeed;
     }
     
-    float currentSpeed = player->speed;
+   
     if (IsKeyDown(KEY_RIGHT)) player->position.x += currentSpeed;
     if (IsKeyDown(KEY_LEFT)) player->position.x -= currentSpeed;
     
@@ -46,8 +48,8 @@ void UpdatePlayer(Player *player) {
 
 void Dash(Player *player) {
     player->isDashing = true;
-    player->dashDuration = 0.2f;
-    player->dashCooldown = 1.0f;
+    player->dashDuration = 0.1f;
+    player->dashCooldown = 1.5f;
     
 
     float dashDirection = 0;

@@ -32,7 +32,6 @@ void UpdatePlayer(Player *player) {
       currentSpeed = player->dashSpeed;
     }
     
-   
     if (IsKeyDown(KEY_RIGHT)) player->position.x += currentSpeed;
     if (IsKeyDown(KEY_LEFT)) player->position.x -= currentSpeed;
     
@@ -82,8 +81,6 @@ void Shoot(Player *player, Vector2 *bullets, int *bulletCount, int maxBullets) {
         }
     }
 }
-
-
 void DrawPlayer(Player *player) {
  
     Color drawColor = player->color;

@@ -8,8 +8,10 @@
 
 int main(void)
 {
+    const int screenW = 800;
+    const int screenH = 600;
 
-    InitWindow(800, 600, "Staquito Adventure");
+    InitWindow(screenW, screenH, "Staquito Adventure");
     SetTargetFPS(60);
 
     Player player;
@@ -21,6 +23,8 @@ int main(void)
     PowerUp powerUps[MAX_POWERUPS];
     int powerUpCount = 0;
     float powerUpSpawnTimer = 0;
+    const float powerUpSpawnInterval = 5.0f;
+    const float powerUpFallSpeed = 120.0f;
 
     Rectangle enemies[MAX_ENEMIES];
     int enemyCount = 0;
@@ -58,6 +62,20 @@ int main(void)
                 30};
             enemyCount++;
             enemySpawnTimer = 0;
+        }
+
+        powerUpSpawnTimer += GetFrameTime();
+        if (powerUpSpawnTimer >= powerUpSpawnInterval && powerUpCount < MAX_POWERUPS)
+        {
+            PowerUp tmp;
+            Vector2 pos;
+            tmp.size = (Vector2){20, 20};
+            pos.x = (float)GetRandomValue(0, screenW - (int)tmp.size.x);
+            pos.y = -tmp.size.y;
+            int type = GetRandomValue(0, 2);
+            initPowerUp(&powerUps[powerUpCount], type, pos);
+            powerUpCount++;
+            powerUpSpawnTimer = 0.0f;
         }
 
         for (int i = 0; i < enemyCount; i++)
@@ -113,30 +131,78 @@ int main(void)
 
                 if (player.health <= 0)
                 {
-                    // Game Over logic can be added here
+                    // tenho que adicionar uma tela de game over dps
                 }
+            }
+        }
+
+        for (int i = 0; i < powerUpCount; i++)
+        {
+            
+            if (!powerUps[i].isActive)
+                continue;
+
+            
+            powerUps[i].position.y += powerUpFallSpeed * GetFrameTime();
+
+            if (powerUps[i].position.y > screenH)
+            {
+                for (int k = i; k < powerUpCount - 1; k++)
+                powerUps[k] = powerUps[k + 1];
+                powerUpCount--;
+                i--;
+                continue;
+            }
+
+            Rectangle pRect = {player.position.x, player.position.y, player.size.x, player.size.y};
+            Rectangle puRect = {powerUps[i].position.x, powerUps[i].position.y, powerUps[i].size.x, powerUps[i].size.y};
+
+            if (CheckCollisionRecs(pRect, puRect))
+            {
+    
+                switch (powerUps[i].type)
+                {
+                case 0:
+                    player.health += 20;
+                    break;
+                case 1:
+                    player.speed += 2.0f;
+                    break;
+                case 2:
+                    player.score += 50;
+                    break;
+                }
+
+                for (int k = i; k < powerUpCount - 1; k++)
+                powerUps[k] = powerUps[k + 1];
+                powerUpCount--;
+                i--;
             }
         }
 
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
-        // Desenha o player
         DrawPlayer(&player);
 
-        // Desenha projéteis
         for (int i = 0; i < bulletCount; i++)
         {
             DrawCircleV(bullets[i], 3, RED);
         }
 
-        // Desenha inimigos
         for (int i = 0; i < enemyCount; i++)
         {
             DrawRectangleRec(enemies[i], DARKGRAY);
         }
 
-        // Desenha UI
+        for (int i = 0; i < powerUpCount; i++)
+        {
+            if (powerUps[i].isActive)
+            {
+                DrawRectangleV(powerUps[i].position, powerUps[i].size, powerUps[i].color);
+            }
+        }
+
         DrawText(TextFormat("Score: %d", player.score), 10, 10, 20, BLACK);
         DrawText(TextFormat("Health: %d", player.health), 10, 40, 20, BLACK);
 

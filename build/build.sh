@@ -20,6 +20,6 @@ cd ../../..
 
 # Compilar seu jogo
 echo "Compilando o jogo..."
-gcc -o MeuJogo.exe scr/main.c scr/player.c scr/powerUp.c  -Iscr/raylib/src -Lscr/raylib/src -lraylib -lopengl32 -lgdi32 -lwinmm -static
+gcc -o MeuJogo.exe scr/main.c scr/player.c scr/powerUp.c scr/enemy.c  -Iscr/raylib/src -Lscr/raylib/src -lraylib -lopengl32 -lgdi32 -lwinmm -static
 
 echo "Compilação concluída!"

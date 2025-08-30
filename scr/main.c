@@ -9,7 +9,8 @@
 #define MAX_ENEMIES 50
 #define MAX_POWERUPS 10
 
-typedef enum {
+typedef enum
+{
     STATE_PLAYING,
     STATE_GAMEOVER
 } GameState;
@@ -73,7 +74,8 @@ int main(void)
                 bullets[i].y -= bulletSpeed;
                 if (bullets[i].y < 0)
                 {
-                    for (int j = i; j < bulletCount - 1; j++) bullets[j] = bullets[j + 1];
+                    for (int j = i; j < bulletCount - 1; j++)
+                        bullets[j] = bullets[j + 1];
                     bulletCount--;
                     i--;
                 }
@@ -97,10 +99,11 @@ int main(void)
             if (enemySpawnTimer >= enemySpawnInterval && enemyCount < MAX_ENEMIES)
             {
                 float x = (float)GetRandomValue(0, screenW - 30);
-                InitEnemy(&enemies[enemyCount], x, -30.0f); // inicializa diretamente
+                EnemyType type = (GetRandomValue(0, 100) < 70) ? ENEMY_NORMAL : ENEMY_ZIGZAG;
+             
+                InitEnemy(&enemies[enemyCount], x, -30.0f, type);
                 enemyCount++;
                 enemySpawnTimer = 0.0f;
-                // printf("Spawn enemy at x=%.1f, total=%d\n", x, enemyCount);
             }
 
             for (int i = 0; i < enemyCount; i++)
@@ -121,7 +124,8 @@ int main(void)
                 {
                     if (CheckCollisionPointRec(bullets[b], enemies[e].rect))
                     {
-                        for (int k = b; k < bulletCount - 1; k++) bullets[k] = bullets[k + 1];
+                        for (int k = b; k < bulletCount - 1; k++)
+                            bullets[k] = bullets[k + 1];
                         bulletCount--;
                         b--;
                         bulletRemoved = true;
@@ -132,10 +136,11 @@ int main(void)
                         break;
                     }
                 }
-                if (bulletRemoved) continue;
+                if (bulletRemoved)
+                    continue;
             }
 
-            Rectangle pRect = { player.position.x, player.position.y, player.size.x, player.size.y };
+            Rectangle pRect = {player.position.x, player.position.y, player.size.x, player.size.y};
             for (int i = 0; i < enemyCount; i++)
             {
                 if (CheckCollisionRecs(pRect, enemies[i].rect))
@@ -153,28 +158,37 @@ int main(void)
 
             for (int i = 0; i < powerUpCount; i++)
             {
-                if (!powerUps[i].isActive) continue;
+                if (!powerUps[i].isActive)
+                    continue;
                 powerUps[i].position.y += powerUpFallSpeed * dt;
 
                 if (powerUps[i].position.y > screenH)
                 {
-                    for (int k = i; k < powerUpCount - 1; k++) powerUps[k] = powerUps[k + 1];
+                    for (int k = i; k < powerUpCount - 1; k++)
+                        powerUps[k] = powerUps[k + 1];
                     powerUpCount--;
                     i--;
                     continue;
                 }
 
-                Rectangle puRect = { powerUps[i].position.x, powerUps[i].position.y, powerUps[i].size.x, powerUps[i].size.y };
+                Rectangle puRect = {powerUps[i].position.x, powerUps[i].position.y, powerUps[i].size.x, powerUps[i].size.y};
                 if (CheckCollisionRecs(pRect, puRect))
                 {
 
                     switch (powerUps[i].type)
                     {
-                        case 0: player.health += 20; break;
-                        case 1: player.speed += 2.0f; break;
-                        case 2: player.score += 50; break;
+                    case 0:
+                        player.health += 20;
+                        break;
+                    case 1:
+                        player.speed += 2.0f;
+                        break;
+                    case 2:
+                        player.score += 50;
+                        break;
                     }
-                    for (int k = i; k < powerUpCount - 1; k++) powerUps[k] = powerUps[k + 1];
+                    for (int k = i; k < powerUpCount - 1; k++)
+                        powerUps[k] = powerUps[k + 1];
                     powerUpCount--;
                     i--;
                 }
@@ -182,7 +196,7 @@ int main(void)
         }
         else if (state == STATE_GAMEOVER)
         {
- 
+
             if (IsKeyPressed(KEY_R))
             {
                 ResetGame(&player, bullets, &bulletCount, powerUps, &powerUpCount, &powerUpSpawnTimer,
@@ -191,7 +205,7 @@ int main(void)
             }
             else if (IsKeyPressed(KEY_Q) || IsKeyPressed(KEY_ESCAPE))
             {
-                break; 
+                break;
             }
         }
 
@@ -200,16 +214,19 @@ int main(void)
 
         if (state == STATE_PLAYING)
         {
-   
+
             DrawPlayer(&player);
 
-            for (int i = 0; i < bulletCount; i++) DrawCircleV(bullets[i], 3, RED);
+            for (int i = 0; i < bulletCount; i++)
+                DrawCircleV(bullets[i], 3, RED);
 
-            for (int i = 0; i < enemyCount; i++) RenderEnemy(&enemies[i]);
+            for (int i = 0; i < enemyCount; i++)
+                RenderEnemy(&enemies[i]);
 
             for (int i = 0; i < powerUpCount; i++)
             {
-                if (powerUps[i].isActive) DrawRectangleV(powerUps[i].position, powerUps[i].size, powerUps[i].color);
+                if (powerUps[i].isActive)
+                    DrawRectangleV(powerUps[i].position, powerUps[i].size, powerUps[i].color);
             }
 
             DrawText(TextFormat("Score: %d", player.score), 10, 10, 20, BLACK);
@@ -218,10 +235,10 @@ int main(void)
         }
         else if (state == STATE_GAMEOVER)
         {
-            DrawText("GAME OVER", screenW/2 - MeasureText("GAME OVER", 40)/2, screenH/2 - 40, 40, RED);
-            DrawText("Press R to Restart", screenW/2 - MeasureText("Press R to Restart", 20)/2, screenH/2 + 10, 20, BLACK);
-            DrawText("Press Q or ESC to Quit", screenW/2 - MeasureText("Press Q or ESC to Quit", 20)/2, screenH/2 + 40, 20, DARKGRAY);
-            DrawText(TextFormat("Final Score: %d", player.score), screenW/2 - MeasureText(TextFormat("Final Score: %d", player.score), 20)/2, screenH/2 + 80, 20, BLACK);
+            DrawText("GAME OVER", screenW / 2 - MeasureText("GAME OVER", 40) / 2, screenH / 2 - 40, 40, RED);
+            DrawText("Press R to Restart", screenW / 2 - MeasureText("Press R to Restart", 20) / 2, screenH / 2 + 10, 20, BLACK);
+            DrawText("Press Q or ESC to Quit", screenW / 2 - MeasureText("Press Q or ESC to Quit", 20) / 2, screenH / 2 + 40, 20, DARKGRAY);
+            DrawText(TextFormat("Final Score: %d", player.score), screenW / 2 - MeasureText(TextFormat("Final Score: %d", player.score), 20) / 2, screenH / 2 + 80, 20, BLACK);
         }
 
         EndDrawing();

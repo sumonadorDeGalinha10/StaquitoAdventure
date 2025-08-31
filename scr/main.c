@@ -11,6 +11,7 @@
 
 typedef enum
 {
+    STATE_MENU,
     STATE_PLAYING,
     STATE_GAMEOVER
 } GameState;
@@ -57,13 +58,23 @@ int main(void)
     float enemySpawnTimer = 0.0f;
     const float enemySpawnInterval = 2.0f;
 
-    GameState state = STATE_PLAYING;
+    GameState state = STATE_MENU;
 
     while (!WindowShouldClose())
     {
         float dt = GetFrameTime();
 
-        if (state == STATE_PLAYING)
+        if (state == STATE_MENU)
+        {
+            if (IsKeyPressed(KEY_ENTER))
+            {
+                ResetGame(&player, bullets, &bulletCount, powerUps, &powerUpCount, &powerUpSpawnTimer,
+                          enemies, &enemyCount, &enemySpawnTimer);
+                state = STATE_PLAYING;
+            }
+        }
+
+        else if (state == STATE_PLAYING)
         {
             UpdatePlayer(&player);
 
@@ -100,7 +111,7 @@ int main(void)
             {
                 float x = (float)GetRandomValue(0, screenW - 30);
                 EnemyType type = (GetRandomValue(0, 100) < 70) ? ENEMY_NORMAL : ENEMY_ZIGZAG;
-             
+
                 InitEnemy(&enemies[enemyCount], x, -30.0f, type);
                 enemyCount++;
                 enemySpawnTimer = 0.0f;
@@ -212,7 +223,14 @@ int main(void)
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
-        if (state == STATE_PLAYING)
+        if (state == STATE_MENU)
+        {
+            DrawText("STAQUITO ADVENTURE", screenW / 2 - MeasureText("STAQUITO ADVENTURE", 40) / 2, screenH / 2 - 60, 40, BLUE);
+            DrawText("Press ENTER to Start", screenW / 2 - MeasureText("Press ENTER to Start", 20) / 2, screenH / 2, 20, DARKGRAY);
+            DrawText("Press ESC to Quit", screenW / 2 - MeasureText("Press ESC to Quit", 20) / 2, screenH / 2 + 30, 20, DARKGRAY);
+        }
+
+        else if (state == STATE_PLAYING)
         {
 
             DrawPlayer(&player);

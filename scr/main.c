@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 #include "raylib.h"
 #include "../include/player.h"
 #include "../include/powerup.h"
@@ -16,6 +17,19 @@ typedef enum
     STATE_GAMEOVER
 } GameState;
 
+
+float enemySpawnRate = 2.0f;
+float enemySpeedMultiplier = 1.0f;
+int waveNumber = 1;
+float gameTime = 0.0f;
+
+void IncreaseDifficulty()
+{
+    waveNumber++;
+    enemySpawnRate = fmax(0.5f, 2.0f - waveNumber * 0.1f);
+    enemySpeedMultiplier = 1.0f + waveNumber * 0.1f;
+}
+
 void ResetGame(Player *player,
                Vector2 bullets[], int *bulletCount,
                PowerUp powerUps[], int *powerUpCount, float *powerUpSpawnTimer,
@@ -27,12 +41,13 @@ void ResetGame(Player *player,
     *powerUpSpawnTimer = 0.0f;
     *enemyCount = 0;
     *enemySpawnTimer = 0.0f;
-    // Opcional: zerar arrays (não obrigatório)
-    // memset(bullets, 0, sizeof(Vector2)*MAX_BULLETS);
-    // memset(powerUps, 0, sizeof(PowerUp)*MAX_POWERUPS);
-    // memset(enemies, 0, sizeof(Enemy)*MAX_ENEMIES);
-}
 
+
+    enemySpawnRate = 2.0f;
+    enemySpeedMultiplier = 1.0f;
+    waveNumber = 1;
+    gameTime = 0.0f;
+}
 int main(void)
 {
     const int screenW = 800;
@@ -43,6 +58,7 @@ int main(void)
 
     Player player;
     InitPlayer(&player);
+    player.health = 50;
 
     Vector2 bullets[MAX_BULLETS];
     int bulletCount = 0;
@@ -53,10 +69,10 @@ int main(void)
     float powerUpSpawnTimer = 0.0f;
     const float powerUpSpawnInterval = 5.0f;
     const float powerUpFallSpeed = 120.0f;
+
     Enemy enemies[MAX_ENEMIES];
     int enemyCount = 0;
     float enemySpawnTimer = 0.0f;
-    const float enemySpawnInterval = 2.0f;
 
     GameState state = STATE_MENU;
 
@@ -73,11 +89,16 @@ int main(void)
                 state = STATE_PLAYING;
             }
         }
-
         else if (state == STATE_PLAYING)
         {
-            UpdatePlayer(&player);
+            gameTime += dt;
 
+            if ((int)gameTime % 30 == 0 && (int)gameTime > 0)
+            {
+                IncreaseDifficulty();
+            }
+
+            UpdatePlayer(&player);
             Shoot(&player, bullets, &bulletCount, MAX_BULLETS);
 
             for (int i = 0; i < bulletCount; i++)
@@ -107,19 +128,28 @@ int main(void)
             }
 
             enemySpawnTimer += dt;
-            if (enemySpawnTimer >= enemySpawnInterval && enemyCount < MAX_ENEMIES)
+            if (enemySpawnTimer >= enemySpawnRate && enemyCount < MAX_ENEMIES)
             {
                 float x = (float)GetRandomValue(0, screenW - 30);
-                EnemyType type = (GetRandomValue(0, 100) < 70) ? ENEMY_NORMAL : ENEMY_ZIGZAG;
 
-                InitEnemy(&enemies[enemyCount], x, -30.0f, type);
+                EnemyType type;
+                int randType = GetRandomValue(0, 100);
+
+                if (randType < 60)
+                    type = ENEMY_NORMAL;
+                else if (randType < 90)
+                    type = ENEMY_ZIGZAG;
+                else
+                    type = ENEMY_SHOOTING;
+
+                InitEnemy(&enemies[enemyCount], x, -30.0f, type, enemySpeedMultiplier);
                 enemyCount++;
                 enemySpawnTimer = 0.0f;
             }
 
             for (int i = 0; i < enemyCount; i++)
             {
-                UpdateEnemy(&enemies[i], dt);
+                UpdateEnemy(&enemies[i], dt, &player);
                 if (enemies[i].rect.y > screenH)
                 {
                     RemoveEnemy(enemies, &enemyCount, i);
@@ -156,9 +186,12 @@ int main(void)
             {
                 if (CheckCollisionRecs(pRect, enemies[i].rect))
                 {
-                    player.health -= 10;
+                    player.health -= 10 + (waveNumber * 2); // Dano aumenta com as waves
                     RemoveEnemy(enemies, &enemyCount, i);
                     i--;
+
+                    // Feedback visual de dano
+
                     if (player.health <= 0)
                     {
                         state = STATE_GAMEOVER;
@@ -185,17 +218,16 @@ int main(void)
                 Rectangle puRect = {powerUps[i].position.x, powerUps[i].position.y, powerUps[i].size.x, powerUps[i].size.y};
                 if (CheckCollisionRecs(pRect, puRect))
                 {
-
                     switch (powerUps[i].type)
                     {
                     case 0:
-                        player.health += 20;
+                        player.health += 10;
                         break;
                     case 1:
-                        player.speed += 2.0f;
+                        player.speed += 1.0f;
                         break;
                     case 2:
-                        player.score += 50;
+                        player.score += 30;
                         break;
                     }
                     for (int k = i; k < powerUpCount - 1; k++)
@@ -207,7 +239,6 @@ int main(void)
         }
         else if (state == STATE_GAMEOVER)
         {
-
             if (IsKeyPressed(KEY_R))
             {
                 ResetGame(&player, bullets, &bulletCount, powerUps, &powerUpCount, &powerUpSpawnTimer,
@@ -229,10 +260,8 @@ int main(void)
             DrawText("Press ENTER to Start", screenW / 2 - MeasureText("Press ENTER to Start", 20) / 2, screenH / 2, 20, DARKGRAY);
             DrawText("Press ESC to Quit", screenW / 2 - MeasureText("Press ESC to Quit", 20) / 2, screenH / 2 + 30, 20, DARKGRAY);
         }
-
         else if (state == STATE_PLAYING)
         {
-
             DrawPlayer(&player);
 
             for (int i = 0; i < bulletCount; i++)
@@ -249,7 +278,8 @@ int main(void)
 
             DrawText(TextFormat("Score: %d", player.score), 10, 10, 20, BLACK);
             DrawText(TextFormat("Health: %d", player.health), 10, 40, 20, BLACK);
-            DrawText(TextFormat("Enemies: %d", enemyCount), 10, 70, 20, BLACK);
+            DrawText(TextFormat("Wave: %d", waveNumber), 10, 70, 20, BLACK);
+            DrawText(TextFormat("Time: %d", (int)gameTime), 10, 100, 20, BLACK);
         }
         else if (state == STATE_GAMEOVER)
         {

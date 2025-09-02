@@ -3,10 +3,13 @@
 
 #include "raylib.h"
 #include <stdbool.h>
+#include "player.h"  
 
 typedef enum {
     ENEMY_NORMAL,
-    ENEMY_ZIGZAG
+    ENEMY_ZIGZAG,
+    ENEMY_SHOOTING,
+    ENEMY_TANK
 } EnemyType;
 
 typedef struct Enemy {
@@ -22,15 +25,8 @@ typedef struct Enemy {
     float frequency;
 } Enemy;
 
-void InitEnemy(Enemy *e, float x, float y, EnemyType type);
-
-void UpdateEnemy(Enemy *e, float dt);
-
+void InitEnemy(Enemy *e, float x, float y, EnemyType type, float speedMultiplier);
+void UpdateEnemy(Enemy *e, float dt, Player *player);
 void RenderEnemy(Enemy *e);
-
-bool SpawnEnemy(Enemy list[], int *count, int max, float x, float y);
-
-
 void RemoveEnemy(Enemy list[], int *count, int index);
-
 #endif
